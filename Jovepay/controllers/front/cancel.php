@@ -1,19 +1,48 @@
-<?php 
-
+<?php
+/**
+ * JOVEpay return URL after a cancelled or failed payment.
+ */
 class JovepayCancelModuleFrontController extends ModuleFrontController
-{ 
-    public function postProcess()
+{
+    public $ssl = true;
+    public $display_column_left = false;
+    public $display_column_right = false;
+
+    public function initContent()
     {
-        //$this->get_name();
-        @ob_clean();
-            /*if ($this->check_ipn_request_is_valid()) {
-                $this->successful_request($_POST);
-            } else {
-                wp_die("Jovepay.com IPN Request Failure");
-            }*/
-            //echo 'Cancel Controller';
-            Tools::redirect(Tools::getShopDomainSsl(true, true) . __PS_BASE_URI__);
+        parent::initContent();
+
+        $cartParams = array('action' => 'show');
+        $cartUrl = $this->context->link->getPageLink('order');
+        if (version_compare(_PS_VERSION_, '1.7', '>=')) {
+            $cartUrl = $this->context->link->getPageLink('cart', null, null, $cartParams);
+        }
+
+        $this->context->smarty->assign(array(
+            'jovepay_shop_url' => $this->context->link->getPageLink('index'),
+            'jovepay_cart_url' => $cartUrl,
+            'jovepay_contact_url' => $this->context->link->getPageLink('contact'),
+        ));
+
+        if (version_compare(_PS_VERSION_, '1.7', '>=')) {
+            $this->setTemplate('module:Jovepay/views/templates/front/failure.tpl');
+        } else {
+            $this->setTemplate('failure-legacy.tpl');
+        }
     }
-    
-    
+
+    public function getBreadcrumbLinks()
+    {
+        if (!method_exists('ModuleFrontController', 'getBreadcrumbLinks')) {
+            return array('links' => array());
+        }
+
+        $breadcrumb = parent::getBreadcrumbLinks();
+        $breadcrumb['links'][] = array(
+            'title' => $this->module->l('Payment failed', 'cancel'),
+            'url' => $this->context->link->getModuleLink($this->module->name, 'cancel'),
+        );
+
+        return $breadcrumb;
+    }
 }

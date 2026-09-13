@@ -1,29 +1,29 @@
 <?php
-/**
-* 2007-2020 PrestaShop
-*
-* NOTICE OF LICENSE
-*
-* This source file is subject to the Academic Free License (AFL 3.0)
-* that is bundled with this package in the file LICENSE.txt.
-* It is also available through the world-wide-web at this URL:
-* http://opensource.org/licenses/afl-3.0.php
-* If you did not receive a copy of the license and are unable to
-* obtain it through the world-wide-web, please send an email
-* to license@prestashop.com so we can send you a copy immediately.
-*
-* DISCLAIMER
-*
-* Do not edit or add to this file if you wish to upgrade PrestaShop to newer
-* versions in the future. If you wish to customize PrestaShop for your
-* needs please refer to http://www.prestashop.com for more information.
-*
-*  @author    PrestaShop SA <contact@prestashop.com>
-*  @copyright 2007-2020 PrestaShop SA
-*  @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
-*  International Registered Trademark & Property of PrestaShop SA
-*/
 
+/**
+ * 2007-2020 PrestaShop
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Academic Free License (AFL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/afl-3.0.php
+ * If you did not receive a copy of the license and are unable to
+ * obtain it through the world-wide-web, please send an email
+ * to license@prestashop.com so we can send you a copy immediately.
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
+ * versions in the future. If you wish to customize PrestaShop for your
+ * needs please refer to http://www.prestashop.com for more information.
+ *
+ *  @author    PrestaShop SA <contact@prestashop.com>
+ *  @copyright 2007-2020 PrestaShop SA
+ *  @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
+ *  International Registered Trademark & Property of PrestaShop SA
+ */
 
 use PrestaShop\PrestaShop\Core\Payment\PaymentOption;
 
@@ -43,57 +43,34 @@ class Jovepay extends PaymentModule
         $this->author = 'JOVEpay';
         $this->need_instance = 0;
 
-        /**
-         * Set $this->bootstrap to true if your module is compliant with bootstrap (PrestaShop 1.6)
-         */
+        /** Set $this->bootstrap to true if your module is compliant with bootstrap (PrestaShop 1.6) */
         $this->bootstrap = true;
 
         parent::__construct();
 
-        $this->displayName = $this->l('JOVEpay');
-        $this->description = $this->l('Expand your store’s payment options with JOVEpay, a fast and secure crypto payment gateway. Accept USDT, USDC, ETH, BNB, LTC, and many more—giving customers the freedom to pay with the crypto they trust.');
-
-        $this->confirmUninstall = $this->l('Are you sure uninstalling JOVEpay?');
-
+        $this->displayName = $this->l('JOVEpay Crypto Payments');
+        $this->description = $this->l('Accept USDT,BTC, ETH, BNB, LTC, and many more,giving customers the freedom to pay with the crypto they trust.');
+        $this->confirmUninstall = $this->l('Are you sure of uninstalling JOVEpay Crypto Payments? All your settings will be lost.');
         $this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
     }
 
-    /**
-     * Don't forget to create update methods if needed:
-     * http://doc.prestashop.com/display/PS16/Enabling+the+Auto-Update
-     */
     public function install()
     {
-        if (extension_loaded('curl') == false)
-        {
+        if (extension_loaded('curl') == false) {
             $this->_errors[] = $this->l('You have to enable the cURL extension on your server to install this module');
             return false;
         }
 
-        $iso_code = Country::getIsoById(Configuration::get('PS_COUNTRY_DEFAULT'));
-
-        // if (in_array($iso_code, $this->limited_countries) == false)
-        // {
-        //     $this->_errors[] = $this->l('This module is not available in your country');
-        //     return false;
-        // }
-
-        Configuration::updateValue('JOVEPAY_LIVE_MODE', false);
-
         return parent::install() &&
             $this->registerHook('header') &&
-            $this->registerHook('backOfficeHeader') &&
             $this->registerHook('payment') &&
             $this->registerHook('paymentReturn') &&
             $this->registerHook('displayPaymentReturn') &&
-            $this->registerHook('paymentOptions') &&
-            $this->registerHook('actionAdminControllerSetMedia');
+            $this->registerHook('paymentOptions');
     }
 
     public function uninstall()
     {
-        Configuration::deleteByName('JOVEPAY_LIVE_MODE');
-
         return parent::uninstall();
     }
 
@@ -102,16 +79,12 @@ class Jovepay extends PaymentModule
      */
     public function getContent()
     {
-        /**
-         * If values have been submitted in the form, process.
-         */
-        if (((bool)Tools::isSubmit('submitJovepayModule')) == true) {
+        /** If values have been submitted in the form, process. */
+        if (((bool) Tools::isSubmit('submitJovepayModule')) == true) {
             $this->postProcess();
         }
 
         $this->context->smarty->assign('module_dir', $this->_path);
-
-        //$output = $this->context->smarty->fetch($this->local_path.'views/templates/admin/configure.tpl');
 
         return $this->renderForm();
     }
@@ -132,11 +105,11 @@ class Jovepay extends PaymentModule
         $helper->identifier = $this->identifier;
         $helper->submit_action = 'submitJovepayModule';
         $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false)
-            .'&configure='.$this->name.'&tab_module='.$this->tab.'&module_name='.$this->name;
+            . '&configure=' . $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name;
         $helper->token = Tools::getAdminTokenLite('AdminModules');
 
         $helper->tpl_vars = array(
-            'fields_value' => $this->getConfigFormValues(), /* Add values for your inputs */
+            'fields_value' => $this->getConfigFormValues(),  /* Add values for your inputs */
             'languages' => $this->context->controller->getLanguages(),
             'id_language' => $this->context->language->id,
         );
@@ -152,29 +125,10 @@ class Jovepay extends PaymentModule
         return array(
             'form' => array(
                 'legend' => array(
-                'title' => $this->l('JOVEpay Settings'),
-                'icon' => 'icon-cogs',
+                    'title' => $this->l('JOVEpay Settings'),
+                    'icon' => 'icon-cogs',
                 ),
                 'input' => array(
-                    array(
-                        'type' => 'switch',
-                        'label' => $this->l('Live mode'),
-                        'name' => 'JOVEPAY_LIVE_MODE',
-                        'is_bool' => true,
-                        'desc' => $this->l('Use this module in live mode'),
-                        'values' => array(
-                            array(
-                                'id' => 'active_on',
-                                'value' => true,
-                                'label' => $this->l('Enabled')
-                            ),
-                            array(
-                                'id' => 'active_off',
-                                'value' => false,
-                                'label' => $this->l('Disabled')
-                            )
-                        ),
-                    ),
                     array(
                         'type' => 'switch',
                         'label' => $this->l('Mainnet/ Testnet mode'),
@@ -231,7 +185,7 @@ class Jovepay extends PaymentModule
                         'col' => 3,
                         'type' => 'text',
                         'desc' => $this->l('Please enter your jovepay.com IPN Secret.'),
-                        'suffix' => '<a target="_blank" href="https://app.jovepay.com/en/payments-settings#ipn">Get it</a>',
+                        'suffix' => '<a target="_blank" href="https://app.jovepay.com/en/webhooks-settings">Get it</a>',
                         'name' => 'JOVEPAY_IPN_SECRET',
                         'label' => $this->l('IPN Secret'),
                     ),
@@ -239,7 +193,7 @@ class Jovepay extends PaymentModule
                         'col' => 3,
                         'type' => 'text',
                         'desc' => $this->l('Please enter your jovepay.com Api Key.'),
-                        'suffix' => '<a target="_blank" href="https://app.jovepay.com/en/payments-settings#api">Get it</a>',
+                        'suffix' => '<a target="_blank" href="https://app.jovepay.com/en/apikey-settings">Get it</a>',
                         'name' => 'JOVEPAY_API_KEY',
                         'label' => $this->l('Api Key'),
                     ),
@@ -264,7 +218,6 @@ class Jovepay extends PaymentModule
     protected function getConfigFormValues()
     {
         return array(
-            'JOVEPAY_LIVE_MODE' => Configuration::get('JOVEPAY_LIVE_MODE', true),
             'JOVEPAY_TESTNET_MODE' => Configuration::get('JOVEPAY_TESTNET_MODE', true),
             'JOVEPAY_DARK_MODE' => Configuration::get('JOVEPAY_DARK_MODE', true),
             'JOVEPAY_TITLE' => Configuration::get('JOVEPAY_TITLE', ''),
@@ -288,23 +241,122 @@ class Jovepay extends PaymentModule
     }
 
     /**
-    * Add the CSS & JavaScript files you want to be loaded in the BO.
-    */
-    public function hookBackOfficeHeader()
-    {
-        if (Tools::getValue('module_name') == $this->name) {
-            $this->context->controller->addJS($this->_path.'views/js/back.js');
-            $this->context->controller->addCSS($this->_path.'views/css/back.css');
-        }
-    }
-
-    /**
-     * Add the CSS & JavaScript files you want to be added on the FO.
+     * Add the CSS / JS files you want to be added on the FO.
      */
     public function hookHeader()
     {
-        $this->context->controller->addJS($this->_path.'/views/js/front.js');
-        $this->context->controller->addCSS($this->_path.'/views/css/front.css');
+        $this->context->controller->addCSS($this->_path . 'views/css/front.css');
+        $this->context->controller->addJS($this->_path . 'views/js/front.js');
+    }
+
+    /**
+     * Crypto coin icons shown beside the gateway title at checkout.
+     *
+     * @return array<int, array{id: string, src: string, alt: string, z_index: int}>
+     */
+    public function getCheckoutCoinIcons()
+    {
+        $base = $this->_path . 'images/coins/';
+        $icons = array(
+            array(
+                'id' => 'btc',
+                'src' => $base . 'btc.png',
+                'alt' => 'Bitcoin',
+            ),
+            array(
+                'id' => 'eth',
+                'src' => $base . 'eth.png',
+                'alt' => 'Ethereum',
+            ),
+            array(
+                'id' => 'usdt',
+                'src' => $base . 'usdt.png',
+                'alt' => 'Tether',
+            ),
+            array(
+                'id' => 'bnb',
+                'src' => $base . 'bnb.png',
+                'alt' => 'BNB',
+            ),
+        );
+
+        $total = count($icons);
+        foreach ($icons as $index => &$icon) {
+            $icon['z_index'] = $total - $index;
+        }
+        unset($icon);
+
+        return $icons;
+    }
+
+    /**
+     * Checkout title shown on the payment option (falls back to JOVEpay).
+     *
+     * @return string
+     */
+    public function getCheckoutTitle()
+    {
+        $title = Configuration::get('JOVEPAY_TITLE');
+
+        if (!is_string($title) || Tools::strlen(trim($title)) === 0) {
+            return $this->l('JOVEpay');
+        }
+
+        return $title;
+    }
+
+    /**
+     * Absolute module asset URL for checkout (logo / coins).
+     *
+     * @param string $relativePath Path under the module root
+     *
+     * @return string
+     */
+    protected function getModuleAssetUrl($relativePath)
+    {
+        return $this->_path . ltrim($relativePath, '/');
+    }
+
+    /**
+     * Render logo + title + stacked coin label for the checkout Pay button.
+     *
+     * @return string
+     */
+    protected function renderPaymentOptionLabel()
+    {
+        $this->context->smarty->assign(array(
+            'jovepay_logo' => $this->getModuleAssetUrl('images/logo.svg'),
+            'jovepay_title' => $this->getCheckoutTitle(),
+            'jovepay_coins' => $this->getCheckoutCoinIcons(),
+        ));
+
+        return $this->context->smarty->fetch(
+            $this->local_path . 'views/templates/hook/payment_option.tpl'
+        );
+    }
+
+    /**
+     * HTML shown under the selected payment option (PS 1.7+).
+     * Includes the logo|title|coins label (moved into the radio label by front.js)
+     * plus an optional merchant description.
+     *
+     * @return string
+     */
+    protected function renderPaymentOptionInfos()
+    {
+        $desc = Configuration::get('JOVEPAY_DESC');
+        if (!is_string($desc)) {
+            $desc = '';
+        }
+
+        $this->context->smarty->assign(array(
+            'jovepay_payment_label' => $this->renderPaymentOptionLabel(),
+            'jovepay_desc' => trim($desc),
+        ));
+
+        return $this->context->smarty->fetch(
+            $this->local_path . 'views/templates/hook/payment_infos.tpl'
+        );
     }
 
     /**
@@ -313,13 +365,15 @@ class Jovepay extends PaymentModule
      */
     public function hookPayment($params)
     {
-        $currency_id = $params['cart']->id_currency;
-        $currency = new Currency((int)$currency_id);
+        if (!$this->active || !$this->checkCurrency($params['cart'])) {
+            return;
+        }
 
-        if (in_array($currency->iso_code, $this->limited_currencies) == false)
-            return false;
-
-        $this->smarty->assign('module_dir', $this->_path);
+        $this->smarty->assign(array(
+            'module_dir' => $this->_path,
+            'jovepay_payment_label' => $this->renderPaymentOptionLabel(),
+            'jovepay_title' => $this->getCheckoutTitle(),
+        ));
 
         return $this->display(__FILE__, 'views/templates/hook/payment.tpl');
     }
@@ -329,13 +383,15 @@ class Jovepay extends PaymentModule
      */
     public function hookPaymentReturn($params)
     {
-        if ($this->active == false)
+        if ($this->active == false) {
             return;
+        }
 
         $order = $params['objOrder'];
 
-        if ($order->getCurrentOrderState()->id != Configuration::get('PS_OS_ERROR'))
+        if ($order->getCurrentOrderState()->id != Configuration::get('PS_OS_ERROR')) {
             $this->smarty->assign('status', 'ok');
+        }
 
         $this->smarty->assign(array(
             'id_order' => $order->id,
@@ -362,16 +418,16 @@ class Jovepay extends PaymentModule
         if (!$this->checkCurrency($params['cart'])) {
             return;
         }
-        //$logo = Tools::getShopDomainSsl(true, true) . __PS_BASE_URI__ . 'modules/Jovepay/flexible.png';
-        $title = Configuration::get('JOVEPAY_TITLE', '');
-        $option = new \PrestaShop\PrestaShop\Core\Payment\PaymentOption();
-        $option->setCallToActionText($title)
-            ->setLogo($this->l('modules/'.$this->name.'/flexible.png'))
-            ->setAction($this->context->link->getModuleLink($this->name, 'validation', array(), true));
 
-        return [
-            $option
-        ];
+        // CTA text is escaped by the core theme; rich label HTML is injected by front.js.
+        $option = new PaymentOption();
+        $option
+            ->setModuleName($this->name)
+            ->setCallToActionText($this->getCheckoutTitle())
+            ->setAction($this->context->link->getModuleLink($this->name, 'validation', array(), true))
+            ->setAdditionalInformation($this->renderPaymentOptionInfos());
+
+        return array($option);
     }
 
     public function checkCurrency($cart)
@@ -386,10 +442,5 @@ class Jovepay extends PaymentModule
             }
         }
         return false;
-    }
-
-    public function hookActionAdminControllerSetMedia()
-    {
-        /* Place your code here. */
     }
 }

@@ -1,1 +1,0 @@
-{extends File='page.tpl'}
